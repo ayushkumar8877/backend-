@@ -100,9 +100,17 @@ export async function login(req, res) {
 
 // Logout controller
 export function logout(req, res) {
-  res.clearCookie("jwt");
+  const isProduction = process.env.NODE_ENV === "production";
+
+  res.clearCookie("jwt", {
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
+  });
+
   res.status(200).json({ success: true, message: "Logout successful" });
 }
+
 
 // Onboarding controller
 export async function onboard(req, res) {
