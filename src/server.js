@@ -11,16 +11,24 @@ import friendRoutes from "./routes/friendRoutes.js";
 import { connectDB } from "./lib/db.js";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-// CORS config
+// ✅ CORS config — abhi sirf localhost ke liye, production URL baad me
+const allowedOrigins = [
+  "http://localhost:5173"
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL, // .env me frontend ka URL daal de
+    origin: allowedOrigins,
     credentials: true,
   })
 );
 
+// ✅ Preflight OPTIONS request ke liye
+app.options("*", cors());
+
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
@@ -30,8 +38,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/friends", friendRoutes);
 
-// Server start
-app.listen(PORT, () => {
+// ✅ Server start — ye line YAHAN likhni hai
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server is running on port ${PORT}`);
   connectDB();
 });
