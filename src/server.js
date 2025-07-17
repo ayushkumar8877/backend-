@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5001;
 // ✅ CORS config — abhi sirf localhost ke liye, production URL baad me
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://frontend-theta-roan-57.vercel.app",
+  "https://vibely-chat-app-uty3.onrender.com",
 ];
 
 app.use(
