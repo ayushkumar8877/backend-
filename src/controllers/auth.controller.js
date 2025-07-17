@@ -2,7 +2,13 @@ import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-// Common cookie config function
+// ✅ In-memory store for online users
+let onlineUsers = [];
+
+// ✅ Exported setter for other modules like friendController
+export const getOnlineUsers = () => onlineUsers;
+
+// ✅ Common function to set cookie
 const setTokenCookie = (res, token) => {
   const isProduction = process.env.NODE_ENV === "production";
 
@@ -14,7 +20,7 @@ const setTokenCookie = (res, token) => {
   });
 };
 
-// Signup controller
+// ✅ Signup controller
 export async function signup(req, res) {
   const { email, password, fullName } = req.body;
 
@@ -34,7 +40,7 @@ export async function signup(req, res) {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already exists, please use a different one" });
+      return res.status(400).json({ message: "Email already exists" });
     }
 
     const idx = Math.floor(Math.random() * 100) + 1;
@@ -59,6 +65,11 @@ export async function signup(req, res) {
 
     setTokenCookie(res, token);
 
+    // ✅ Mark user as online
+    if (!onlineUsers.includes(newUser._id.toString())) {
+      onlineUsers.push(newUser._id.toString());
+    }
+
     res.status(201).json({ success: true, user: newUser });
   } catch (error) {
     console.error("Error in signup controller", error);
@@ -66,7 +77,7 @@ export async function signup(req, res) {
   }
 }
 
-// Login controller
+// ✅ Login controller
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -91,6 +102,12 @@ export async function login(req, res) {
 
     setTokenCookie(res, token);
 
+    // ✅ Mark user as online
+    const userIdStr = user._id.toString();
+    if (!onlineUsers.includes(userIdStr)) {
+      onlineUsers.push(userIdStr);
+    }
+
     res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("Error in login controller", error.message);
@@ -98,9 +115,15 @@ export async function login(req, res) {
   }
 }
 
-// Logout controller
+// ✅ Logout controller
 export function logout(req, res) {
   const isProduction = process.env.NODE_ENV === "production";
+
+  // ✅ Remove user from onlineUsers array
+  const userId = req.user?.id || req.user?._id;
+  if (userId) {
+    onlineUsers = onlineUsers.filter((id) => id !== userId.toString());
+  }
 
   res.clearCookie("jwt", {
     httpOnly: true,
@@ -111,8 +134,7 @@ export function logout(req, res) {
   res.status(200).json({ success: true, message: "Logout successful" });
 }
 
-
-// Onboarding controller
+// ✅ Onboarding controller
 export async function onboard(req, res) {
   try {
     const userId = req.user._id;
